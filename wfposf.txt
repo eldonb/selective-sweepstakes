@@ -1,0 +1,100 @@
+// try a simple  sim
+// for i in $(seq 100); do echo "slim fatboyslim_background.txt | tail -n136 > kgkg_"$i & done > listslim
+// for i in $(seq 100); do echo "slim fatboyslim_background.txt | tail -n136 > background_d_resout_"$i & done > listslim
+initialize()
+{
+         initializeTreeSeq(checkCoalescence=T) ;
+
+	// set overall mutation rate  1e-9
+	initializeMutationRate(1e-12);
+
+	// m1 mutaton type negative for  background sel
+	// 0.1: dominance coefficient 0.1
+	// g:   selection coefficient random Gamma
+       //  first  value was mean -0.05; else everything else the same
+	// -0.03: mean of gamma
+	// 0.2: shape parameter
+        // _b_resout is with  mean of gamma -0.02
+        // _c_resout is with mean of gamma -0.03
+        // _d_resout is with mean of gamma -0.04
+       // _e_resout is with mean of gamma -0.05
+       // _aa_ with mean gamma -0.05 and proportions neutral:negative = 9:1 
+       // ff with equal 1:1 m1:m2 and mean -0.5 of negative mutations; run for 1e5 generations
+       // gg with equal 1:1 m1:m2 and mean -0.1 of negs; run for 2e5 generations
+       // hh with equal 1:1 m1:m2 and mean -0.05 of negs; run for 2e5 generations
+       // all constant pop size 1e4
+       // 
+       // introduce  positive mutation m3 with fixed beneficial effects: 
+       // initializeMutationType("m3", 1.0, "f", 0.5);
+	initializeMutationType("m1", 1.0, "g", -0.05, 2);
+	// initializeMutationType("m1", 0.5, "f", 0.0);
+
+	// m2 mutation type neutral
+	initializeMutationType("m2", 1., "f", 0.0);
+
+        // m3 mutation type positive
+        initializeMutationType("m3", 1.0, "f", 0.5);
+
+	// g1 genomic element; use m1 all muts
+	// both neutral and negative mutations
+	// in relative proportions 1:1
+	initializeGenomicElementType("g1", c(m1,m3), c(29,1) );
+
+	// uniform chrom of length 100 kb
+	// see chromosomesize.txt
+	initializeGenomicElement(g1, 0, 99999);
+
+	// uniform recombination along chrom
+	initializeRecombinationRate(1e-7);
+}
+
+// population size of diploid individuals
+1
+{
+	sim.addSubpop("p1", 10000);
+}
+
+
+ early() 
+ {
+    p1.fitnessScaling = 10000/p1.individualCount;
+ }
+
+
+1: late(){
+ 
+   if(sim.treeSeqCoalesced())
+     {
+        tala = rdunif(1, 1232, 4532094012) ;
+        sim.treeSeqOutput("./wfnegm005shape2posh1s0_5Ne4me-12_" + asString(tala) + "_.trees");
+        sim.simulationFinished() ;
+     }
+
+}
+
+//1000:1099 {
+//        newSize = asInteger(p1.individualCount * 1.1);
+//        p1.setSubpopulationSize(newSize);
+//}
+//1600:2000 {
+//        newSize = asInteger(p1.individualCount * 1.01);
+//        p1.setSubpopulationSize(newSize);
+//}
+// run to generato 6000
+1000000 late() {
+        //g=sample(sim.subpopulations.genomes,136,F);
+	//m=sortBy(unique(g.mutations), "position");
+	//for (z in g)
+	//{
+	//	h=(match(m, z.mutations) >= 0);
+	//	cat(paste(asInteger(h), sep=" ") + "\n");
+	//}
+        //p1.outputMSSample(136, replace=F);
+
+        //
+        //  tala = rdunif(1, 1232, 4532094012) ;	
+        // sim.treeSeqOutput("./wfposh1s1me-10Ne4_" + asString(tala) + "_.trees");
+        //  sim.simulationFinished() ;
+       catn("no coal for f run ");
+ 
+}
