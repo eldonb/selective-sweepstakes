@@ -1,0 +1,146 @@
+
+// try a simple  sim
+// nohup slim fatboyslim_skewed.txt | tail -n136 > prufaskewed_resout
+function (float)pow(float x, float y)
+         { return x^y;}
+// probability of k juveniles :
+//   return( (pow(  1./k, a) - pow( 1./(k+1.), a))/( pow( .5, a)  -  pow( 1./(cutoff + 1.), a) ) );
+function (float)pxi( float a,  float x, float m)
+         {
+             // take x from 2 to m
+             return (pow(1.0/x, a) - pow( 1.0/(x + 1.0), a))/( pow(0.5, a) - pow( 1.0/(m+1) , a));
+          }
+
+initialize() {
+
+        // initiliase tree seq
+        //initializeTreeSeq();
+
+        // set non-Wright Fisher evolution
+        initializeSLiMModelType("nonWF");
+
+         initializeTreeSeq(checkCoalescence=T) ;
+
+        defineConstant("N", 1000 );
+        defineConstant("K", 2*N);
+
+        //define pop size 
+        defineConstant("POPSIZE_", 2*N);
+
+        // set cutoff for numbers of juveniles
+        defineConstant("CUTOFF_", 2*100*N);
+
+        // set alpha parameter
+       defineConstant("ALPHA_", 1.1);
+
+	// set overall mutation rate 1e-8
+	initializeMutationRate(1e-10);
+
+	// m1 mutaton type negative
+	// 0.1: dominance coefficient 0.1
+	// g:   selection coefficient random Gamma
+	// -0.03: mean of gamma
+	// 0.2: shape parameter
+        //  initializeMutationType("m1", 1.0, "g", -0.05, 2);
+	initializeMutationType("m1", 1.0, "g", -0.05, 2);
+	// initializeMutationType("m1", 0.5, "f", 0.0);
+
+	// m2 mutation type neutral
+	initializeMutationType("m2", 0.5, "f", 0.0);
+
+       // initialise mutation type positive
+       initializeMutationType("m3", 1.0, "f", 1.0);
+
+	// g1 genomic element; use m2 all muts
+	// initializeGenomicElementType("g1", m2, 1.0);
+        // allowing negative mutations
+         initializeGenomicElementType("g1", c(m1, m3),  c(29,1));
+
+	// uniform chrom of length 100 kb
+	// see chromosomesize.txt
+	initializeGenomicElement(g1, 0, 99999);
+
+	// uniform recombination along chrom
+	initializeRecombinationRate(1e-7);
+
+        // construct the probabilities for sampling juveniles
+        cdf = (1.0/(2.0:(CUTOFF_)))^ALPHA_ ;
+        
+        cdf = cdf - ( (1.0/(3.0:(CUTOFF_ + 1.0)))^ALPHA_ );
+        
+        cdf = cdf / sum(cdf); 
+        cdf = c(0.0, 0.0, cdf);
+	
+        // construct the cdf for sampling juveniles
+        for( i in 3:(CUTOFF_))
+             {  cdf[i] = cdf[i] + cdf[i-1]; }
+       
+
+        //for ( i in 1:10)
+        //   { k = 2;  u = runif(1); 
+        //          while(  u > cdf[k] )
+        //             { k = k + 1;}
+        //         }
+
+        // store the cdf
+        defineConstant("CDF_", cdf);
+	// print(CDF_);
+}
+
+reproduction() {
+
+    parents = sample(p1.individuals, p1.individualCount);
+
+    for ( i in seq( 0, p1.individualCount -2, by=2))
+        { parent1 = parents[i]; parent2 = parents[i+1];
+           u = runif(1); k = 2;
+           while( u > CDF_[k]){ 
+                // assert( CDF_[k] > 0)
+                // assert( CDF_[k] <= 1) 
+                k = k + 1; }
+          // assert(k > 1);
+          for( j in seqLen(k)){
+                  p1.addCrossed(parent1, parent2); }
+           }
+    // disable for the generation
+    self.active = 0;
+}
+
+//
+1 early()
+{
+	sim.addSubpop("p1", POPSIZE_);
+}
+
+early() 
+{
+   p1.fitnessScaling = K/p1.individualCount;
+}
+
+1: late(){
+ 
+   if(sim.treeSeqCoalesced())
+     {
+        tala = rdunif(1, 1232, 4532094012) ;
+        sim.treeSeqOutput("./skewedalpha1_1negm005shape2posh1s1N2e3_" + asString(tala) + "_.trees");
+        sim.simulationFinished() ;
+     }
+
+}
+
+// run for given number of generations
+100000 late() { 
+    //    g=sample(sim.subpopulations.genomes,136,F);
+    //	m=sortBy(unique(g.mutations), "position");
+//	for (z in g)
+//	{
+//		h=(match(m, z.mutations) >= 0);
+//		cat(paste(asInteger(h), sep=" ") + "\n");
+//	}
+// p1.outputMSSample(136, replace=F);
+//   tala = rdunif(1, 1232, 4532094012) ;
+//   sim.treeSeqOutput("./ALPHAthree_" + asString(tala) + "_.trees");
+//    sim.simulationFinished() ;
+
+    catn("no coal of skewed ") ;
+}
